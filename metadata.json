@@ -1,0 +1,6 @@
+{
+  "name": "TECHSKULL",
+  "description": "Empowering the Next Generation of Tech Professionals. A premium student technology learning platform featuring online courses, live coding classes, interactive dashboards, and career-focused mentorship.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
