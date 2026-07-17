@@ -77,6 +77,57 @@ export default function App() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // --- Google OAuth Handler ---
+  const handleGoogleSignIn = async () => {
+    try {
+      // 1. Fetch the OAuth URL from server
+      const response = await fetch(`/api/auth/google/url?role=${authRole}`);
+      if (!response.ok) {
+        throw new Error('Failed to get auth URL');
+      }
+      const { url } = await response.json();
+
+      // 2. Open the OAuth provider's URL directly in a popup
+      const authWindow = window.open(
+        url,
+        'oauth_popup',
+        'width=600,height=700'
+      );
+
+      if (!authWindow) {
+        alert('Please allow popups for this site to authenticate with Google.');
+      }
+    } catch (error) {
+      console.error('OAuth initiation error:', error);
+      alert('Could not start Google Sign-In. Please check if the backend is connected.');
+    }
+  };
+
+  // Listen for success message from OAuth popup
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      // Allow messages from the preview origin or localhost
+      const origin = event.origin;
+      if (!origin.endsWith('.run.app') && !origin.includes('localhost')) {
+        return;
+      }
+
+      if (event.data?.type === 'OAUTH_AUTH_SUCCESS') {
+        const role = event.data.role || authRole;
+        setFormSuccessMessage(`Securely authenticated with Google as ${role}.`);
+        setTimeout(() => {
+          setIsLoginOpen(false);
+          setIsRegisterOpen(false);
+          setFormSuccessMessage(null);
+          setAuthRole('student');
+        }, 2500);
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [authRole]);
+
   // Form Handlers
   const handleLoginSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -279,14 +330,7 @@ export default function App() {
 
             <button
               type="button"
-              onClick={() => {
-                setFormSuccessMessage(`Securely authenticated with Google as ${authRole}.`);
-                setTimeout(() => {
-                  setIsLoginOpen(false);
-                  setFormSuccessMessage(null);
-                  setAuthRole('student');
-                }, 2000);
-              }}
+              onClick={handleGoogleSignIn}
               className="w-full flex items-center justify-center space-x-2 py-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-white font-bold text-sm hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -459,14 +503,7 @@ export default function App() {
 
             <button
               type="button"
-              onClick={() => {
-                setFormSuccessMessage(`Securely authenticated with Google as ${authRole}.`);
-                setTimeout(() => {
-                  setIsRegisterOpen(false);
-                  setFormSuccessMessage(null);
-                  setAuthRole('student');
-                }, 2000);
-              }}
+              onClick={handleGoogleSignIn}
               className="w-full flex items-center justify-center space-x-2 py-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-white font-bold text-sm hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24">
